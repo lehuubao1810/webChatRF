@@ -1,15 +1,16 @@
-import {React, useContext, useState} from 'react'
+import {React, useContext, useState, useLayoutEffect, useEffect} from 'react'
 import Img from '../images/img.png'
 import Attach from '../images/attach.png'
 import {AuthContext} from "../context/AuthContext"
 import { ChatContext } from '../context/ChatContext'
-import { arrayUnion, updateDoc, doc, Timestamp, serverTimestamp } from 'firebase/firestore'
+import { arrayUnion, updateDoc, doc, Timestamp, serverTimestamp, getDoc } from 'firebase/firestore'
 import {v4 as uuid} from "uuid"
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../firebase";
 
 const Input = () => {
   const [text, setText] = useState("")
+  const [textTranslated, setTextTranslated] = useState("")
   const [img, setImg] = useState(null)
   const {currentUser} =useContext(AuthContext)
   const {data} = useContext(ChatContext)
@@ -21,8 +22,57 @@ const Input = () => {
     }
   }
 
+  // Get country from firestore
+  const [country, setCountry] = useState("")
+  const getData = async (user, setCountry) => {
+    const docRef = doc(db, "users", user);
+    const docSnap = await getDoc(docRef);
+    setCountry(docSnap.data().country)
+  }
+  getData(currentUser.uid, setCountry);
+  const userID = currentUser.uid;
+  const chatID = data.chatId;
+  let userID_re = chatID.replace(userID, "");
+  const [country_re, setCountry_re] = useState("")
+  getData(userID_re, setCountry_re);
+
+  const handleTranslate = async (text, country, country_re) => {
+      let urlAPI = `https://api.mymemory.translated.net/get?q=${text}!&langpair=${country}|${country_re}`;
+      await fetch(urlAPI)
+          .then((response) => response.json())
+          .then((data) => {
+            setTextTranslated(data.responseData.translatedText)
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+    }
+
+  useLayoutEffect(() => {
+    handleTranslate(text, country, country_re)
+  }, [text])
+
+  const [urlImg, setUrlImg] = useState(null)
+  const handleImgInput = (e) => {
+    const imgInput = e.target.files[0]
+    setImg(imgInput)
+    // create url for img
+    setUrlImg(URL.createObjectURL(imgInput))
+  }
+
+  useEffect(() => {
+    // Khi avatar thay đổi thì xóa url cũ đi để tránh memory leak
+    return () => {
+      urlImg && URL.revokeObjectURL(urlImg);
+    }
+  }, [urlImg]);
+
+  // setText(text + "test");
+
   const handleSend = async()=>{
-    setText("")
+    setText("");
+    setUrlImg(null);
+    // handleTranslate(text, country, country_re);
     if(img){
       const storageRef = ref(storage, uuid());
       const uploadTask = uploadBytesResumable(storageRef, img);
@@ -42,6 +92,7 @@ const Input = () => {
                 senderId:currentUser.uid,
                 date: Timestamp.now(),
                 img: downloadURL,
+                textTranslated,
               })
             })
           });
@@ -55,7 +106,8 @@ const Input = () => {
             id: uuid(),
             text,
             senderId:currentUser.uid,
-            date: Timestamp.now()
+            date: Timestamp.now(),
+            textTranslated,
           })
         })
       } else {
@@ -90,14 +142,26 @@ const Input = () => {
   }
   return (
     <div className='input'>
-      <input id='input' type="text" placeholder='Message' autoComplete="off" onKeyDown={handleKeyDown} onChange={e=>setText(e.target.value)} value={text}/>
-      <div className="send">
-        <img src={Attach} alt="" />
-        <input type="file" style={{display:"none"}} id="file" onChange={e=>setImg(e.target.files[0])}/>
-        <label htmlFor="file">
-          <img src={Img} alt="" />
-        </label>
-        <button onClick={handleSend}>Send</button>
+      {urlImg && <img src={urlImg} alt="imgInput" className="imgInput"/>}
+      <div className='inputComps'>
+        <input id='input' type="text" placeholder='Message' autoComplete="off" 
+              onKeyDown={handleKeyDown} 
+              onChange={e=>setText(e.target.value)} 
+              value={text}
+        />
+        <div className="send">
+          <img src={Attach} alt="" />
+          <input type="file" style={{display:"none"}} id="file" 
+              onChange={handleImgInput} 
+              onClick={(e)=>{
+                e.target.value = null
+              }}
+          />
+          <label htmlFor="file">
+            <img src={Img} alt="" />
+          </label>
+          <button onClick={handleSend}>Send</button>
+        </div>
       </div>
     </div>
   )
