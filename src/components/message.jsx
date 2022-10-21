@@ -1,4 +1,4 @@
-import {React, useContext, useEffect, useRef} from 'react'
+import {React, useContext, useEffect, useRef, useLayoutEffect, useState} from 'react'
 import { ChatContext } from '../context/ChatContext'
 // import cyno from "../images/cyno.jpg"
 import {AuthContext} from "../context/AuthContext"
@@ -12,6 +12,11 @@ const Message = ({message}) => {
     ref.current?.scrollIntoView({behavior:"smooth"})
   },[message])
   
+  const [textDisplay, setTextDisplay] = useState(null)
+  const isCurrentUser = message.senderId === currentUser.uid;
+  useEffect(() => {
+    isCurrentUser ? setTextDisplay(message.text) : setTextDisplay(message.textTranslated)
+  }, [message])
   // Handle zoom in/out on image
   const handleZoomImg = (e) => {
     e.target.classList.toggle("imgMess--zoom")
@@ -25,7 +30,7 @@ const Message = ({message}) => {
         {/* <span>just now</span> */}
       </div>
       <div className="messageContent">
-        {message.text && <p>{message.text }</p>}
+        {textDisplay && <p>{textDisplay }</p>}
         {/* {message.img && <img src={message.img} alt="" className='imgMess'  />} */}
         {message.img && <img src={message.img} alt="" className='imgMess' onClick={handleZoomImg} />}
       </div> 

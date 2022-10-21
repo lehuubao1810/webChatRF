@@ -12,8 +12,11 @@ const Input = () => {
   const [text, setText] = useState("")
   const [textTranslated, setTextTranslated] = useState("")
   const [img, setImg] = useState(null)
+  // const [loading, setLoading] = useState(false);
+
   const {currentUser} =useContext(AuthContext)
   const {data} = useContext(ChatContext)
+  
   
   const handleKeyDown = (e) => {
     if(e.key === "Enter"){
@@ -37,6 +40,7 @@ const Input = () => {
   getData(userID_re, setCountry_re);
 
   const handleTranslate = async (text, country, country_re) => {
+    if (text !== ""){
       let urlAPI = `https://api.mymemory.translated.net/get?q=${text}!&langpair=${country}|${country_re}`;
       await fetch(urlAPI)
           .then((response) => response.json())
@@ -46,7 +50,10 @@ const Input = () => {
           .catch((error) => {
             console.log(error);
           });
-    }
+    } else {
+      setTextTranslated("")
+    }   
+  }
 
   useLayoutEffect(() => {
     handleTranslate(text, country, country_re)
@@ -72,6 +79,7 @@ const Input = () => {
   const handleSend = async()=>{
     setText("");
     setUrlImg(null);
+    // setLoading(true)
     // handleTranslate(text, country, country_re);
     if(img){
       const storageRef = ref(storage, uuid());
