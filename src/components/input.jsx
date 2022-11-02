@@ -33,9 +33,11 @@ const Input = () => {
     setCountry(docSnap.data().country)
   }
   getData(currentUser.uid, setCountry);
+  
   const userID = currentUser.uid;
   const chatID = data.chatId;
   let userID_re = chatID.replace(userID, "");
+
   const [country_re, setCountry_re] = useState("")
   getData(userID_re, setCountry_re);
 
@@ -65,6 +67,11 @@ const Input = () => {
     setImg(imgInput)
     // create url for img
     setUrlImg(URL.createObjectURL(imgInput))
+  }
+
+  const handleDeleteImg = () => {
+    setImg(null)
+    setUrlImg(null)
   }
 
   useEffect(() => {
@@ -150,7 +157,12 @@ const Input = () => {
   }
   return (
     <div className='input'>
-      {urlImg && <img src={urlImg} alt="imgInput" className="imgInput"/>}
+      {urlImg && 
+        <div className='imgPrev'>
+          <img src={urlImg} alt="imgInput" className="imgInput"/>
+          <button className="btn-deleteImgPrev" onClick={handleDeleteImg}><strong>X</strong></button>
+        </div>
+      }
       <div className='inputComps'>
         <input id='input' type="text" placeholder='Message' autoComplete="off" 
               onKeyDown={handleKeyDown} 

@@ -146,7 +146,7 @@ const Chat = () => {
     <div className='chat'>
       <div className="chatInfo">
         <span>{data.user?.displayName}</span>
-        <div className="chatIcons">
+        <div className="chatFunctions">
           {/* <img src={Cam} alt="" />
           <img src={Add} alt="" /> */}
           {/* <img src={More} alt="" /> */}
@@ -158,6 +158,11 @@ const Chat = () => {
               })
             }
           </select>
+          <>
+            <input type="checkbox" id="switch" class="switch-input" />
+            <label for="switch" class="switch"></label>
+          </>
+
         </div>
       </div>
       <Messages/>
